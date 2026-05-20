@@ -1,6 +1,8 @@
+from enum import unique
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from apps.core.models import UUIDModel
+from django.utils import choices
+from apps.core.models import TimeStampedModel, UUIDModel
 
 
 class User(AbstractUser, UUIDModel):
@@ -26,3 +28,25 @@ class User(AbstractUser, UUIDModel):
 
     def __str__(self):
         return self.email
+
+
+class UserDevice(TimeStampedModel):
+
+    class Platform(models.TextChoices):
+        IOS = "IOS", "iOS"
+        ANDROID = "ANDROID", "Android"
+        WEB = "WEB", "Web"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="devices")
+    device_token = models.CharField(max_length=255, unique=True)
+    platform = models.CharField(max_length=10, choices=Platform.choices)
+    is_active = models.BooleanField(default=True)
+    last_seen_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "identity_user_device"
+        verbose_name = "Dispositivo"
+        verbose_name_plural = "Dispositivos"
+
+    def __str__(self):
+        return f"{self.user.email} - {self.platform}"
