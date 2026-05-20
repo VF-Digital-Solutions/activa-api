@@ -24,15 +24,15 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    # "apps.core",
-    # "apps.identity",
-    # "apps.households",
-    # "apps.assets",
-    # "apps.routines",
-    # "apps.reservations",
-    # "apps.benefits",
-    # "apps.finances",
-    # "apps.notifications",
+    "apps.core",
+    "apps.identity",
+    "apps.households",
+    "apps.assets",
+    "apps.routines",
+    "apps.reservations",
+    "apps.benefits",
+    "apps.finances",
+    "apps.notifications",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -67,7 +67,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-# AUTH_USER_MODEL = "identity.User"
+AUTH_USER_MODEL = "identity.User"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
