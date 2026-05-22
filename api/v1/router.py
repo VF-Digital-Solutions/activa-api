@@ -1,7 +1,7 @@
 from django.urls import include, path
-from apps.identity import urls as identity_urls
 
 urlpatterns = [
-    path("auth/", include(identity_urls)),
+    path("auth/", include("apps.identity.urls")),
     path("households/", include("apps.households.urls")),
+    path("assets/", include("apps.assets.urls")),
 ]
