@@ -1,12 +1,13 @@
 from pathlib import Path
 from decouple import config
+from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["192.168.1.127", "localhost", "127.0.0.1"]
 
 DJANGO_APPS = [
     "django.contrib.admin",
@@ -20,6 +21,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "django_celery_beat",
 ]
 
@@ -98,4 +100,13 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_PAGINATION_CLASS": "apps.core.pagination.StandardPagination",
     "PAGE_SIZE": 20,
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
