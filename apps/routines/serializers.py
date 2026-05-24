@@ -55,11 +55,7 @@ class HabitStreakSerializer(serializers.ModelSerializer):
         model = HabitStreak
         fields = [
             "id",
-   @extend_schema(
-            summary="Get household",
-            description="Returns a household by ID.",
-            )
-           "habit",
+            "habit",
             "current_streak",
             "longest_streak",
             "last_completed_at",
