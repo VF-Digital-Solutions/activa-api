@@ -19,6 +19,8 @@ class RegisterView(APIView):
     @extend_schema(
         summary="Register a new user",
         description="Creates a new user account and returns JWT tokens",
+        request=RegisterSerializer,
+        responses={201: UserSerializer},
     )
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -42,6 +44,8 @@ class LoginView(APIView):
     @extend_schema(
         summary="Login",
         description="Authenticates auser and returns JWT tokens.",
+        request=LoginSerializer,
+        responses={201: UserSerializer},
     )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -61,7 +65,17 @@ class LoginView(APIView):
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(summary="Logout", description="Invalidates the refresh token")
+    @extend_schema(
+        summary="Logout",
+        description="Invalidates the refresh token",
+        request={
+            "application/json": {
+                "type": "object",
+                "properties": {"refresh": {"type": "string"}},
+            }
+        },
+        responses={204: None},
+    )
     def post(self, request):
         try:
             refresh_token = request.data["refresh"]
@@ -79,10 +93,17 @@ class MeView(APIView):
     @extend_schema(
         summary="Get current user",
         description="Returns the authenticated user's profile.",
+        responses={200: UserSerializer},
     )
     def get(self, request):
         return Response(UserSerializer(request.user).data)
 
+    @extend_schema(
+        summary="Update current user",
+        description="Partially updates the authenticated user's profile.",
+        request=UserSerializer,
+        responses={200: UserSerializer},
+    )
     def patch(self, request):
         serializer = UserSerializer(request.user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
