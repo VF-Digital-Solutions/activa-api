@@ -140,7 +140,7 @@ class HabitStreakView(APIView):
 
 
 @extend_schema(tags=["Routines - Household"])
-class HouseholdRoutineListCreate(APIView):
+class HouseholdRoutineListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
