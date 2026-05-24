@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_spectacular.utils import extend_schema
 
 from apps.identity.serializers import (
     LoginSerializer,
@@ -11,9 +12,14 @@ from apps.identity.serializers import (
 )
 
 
+@extend_schema(tags=["Authenticacion"])
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        summary="Register a new user",
+        description="Creates a new user account and returns JWT tokens",
+    )
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -29,9 +35,14 @@ class RegisterView(APIView):
         )
 
 
+@extend_schema(tags=["Authenticacion"])
 class LoginView(APIView):
     permission_classes = [AllowAny]
 
+    @extend_schema(
+        summary="Login",
+        description="Authenticates auser and returns JWT tokens.",
+    )
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -46,9 +57,11 @@ class LoginView(APIView):
         )
 
 
+@extend_schema(tags=["Authenticacion"])
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(summary="Logout", description="Invalidates the refresh token")
     def post(self, request):
         try:
             refresh_token = request.data["refresh"]
@@ -59,9 +72,14 @@ class LogoutView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
+@extend_schema(tags=["Authenticacion"])
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        summary="Get current user",
+        description="Returns the authenticated user's profile.",
+    )
     def get(self, request):
         return Response(UserSerializer(request.user).data)
 
