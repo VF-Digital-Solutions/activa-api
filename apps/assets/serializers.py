@@ -45,6 +45,8 @@ class AssetSerializer(serializers.ModelSerializer):
 
 
 class AssetDocumentSerializer(serializers.ModelSerializer):
+    file_url = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = AssetDocument
         fields = [
@@ -53,12 +55,20 @@ class AssetDocumentSerializer(serializers.ModelSerializer):
             "uploaded_by",
             "name",
             "type",
+            "file",
             "file_url",
             "file_size",
             "mime_type",
             "created_at",
         ]
-        read_only_fields = ["id", "uploaded_by", "created_at"]
+        read_only_fields = ["id", "uploaded_by", "file_url", "created_at"]
+        extra_kwargs = {"file": {"write_only": True}}
+
+    def get_file_url(self, obj):
+        request = self.context.get("request")
+        if obj.file and request:
+            return request.build_absolute_uri(obj.file.url)
+        return None
 
 
 class AssetUsageLogSerializer(serializers.ModelSerializer):

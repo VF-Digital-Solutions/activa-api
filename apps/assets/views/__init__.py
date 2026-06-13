@@ -113,7 +113,7 @@ class AssetDocumentListCreateView(APIView):
     )
     def get(self, request, pk):
         documents = AssetDocument.objects.filter(asset_id=pk)
-        serializer = AssetDocumentSerializer(documents, many=True)
+        serializer = AssetDocumentSerializer(documents, many=True, context={"request": request})
         return Response(serializer.data)
 
     @extend_schema(
@@ -123,7 +123,7 @@ class AssetDocumentListCreateView(APIView):
     def post(self, request, pk):
         data = request.data.copy()
         data["asset"] = pk
-        serializer = AssetDocumentSerializer(data=data)
+        serializer = AssetDocumentSerializer(data=data, context={"request": request})
         serializer.is_valid(raise_exception=True)
         serializer.save(uploaded_by=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

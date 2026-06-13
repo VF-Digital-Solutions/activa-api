@@ -81,7 +81,7 @@ class AssetDocument(TimeStampedModel):
     type = models.CharField(
         max_length=10, choices=DocType.choices, default=DocType.OTHER
     )
-    file_url = models.URLField()
+    file = models.FileField(upload_to="assets/documents/", blank=True)
     file_size = models.PositiveIntegerField(null=True, blank=True)
     mime_type = models.CharField(max_length=100, blank=True)
 
