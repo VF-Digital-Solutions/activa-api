@@ -2,7 +2,8 @@ from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.utils import extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 from apps.assets.models import (
     Asset,
@@ -10,6 +11,7 @@ from apps.assets.models import (
     AssetDocument,
     AssetUsageLog,
     MaintenanceRecord,
+    MaintenanceTemplate,
 )
 from apps.assets.serializers import (
     AssetSerializer,
@@ -17,6 +19,7 @@ from apps.assets.serializers import (
     AssetDocumentSerializer,
     AssetUsageLogSerializer,
     MaintenanceRecordSerializer,
+    MaintenanceTemplateSerializer,
 )
 
 
@@ -201,3 +204,69 @@ class MaintenanceRecordDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+@extend_schema(tags=["Assets"])
+class MaintenanceTemplateListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List maintenance templates",
+        description="Returns maintenance templates. Filter by category using ?category=<id>.",
+        parameters=[
+            OpenApiParameter("category", OpenApiTypes.UUID, description="Filter by category ID"),
+        ],
+    )
+    def get(self, request):
+        category_id = request.query_params.get("category")
+        templates = MaintenanceTemplate.objects.all()
+        if category_id:
+            templates = templates.filter(category_id=category_id)
+        serializer = MaintenanceTemplateSerializer(templates, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Create maintenance template",
+        description="Creates a new maintenance template for a category.",
+    )
+    def post(self, request):
+        serializer = MaintenanceTemplateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Assets"])
+class MaintenanceTemplateDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, pk):
+        try:
+            return MaintenanceTemplate.objects.get(pk=pk)
+        except MaintenanceTemplate.DoesNotExist:
+            return None
+
+    @extend_schema(summary="Get maintenance template")
+    def get(self, request, pk):
+        template = self.get_object(pk)
+        if not template:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(MaintenanceTemplateSerializer(template).data)
+
+    @extend_schema(summary="Update maintenance template")
+    def patch(self, request, pk):
+        template = self.get_object(pk)
+        if not template:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = MaintenanceTemplateSerializer(template, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @extend_schema(summary="Delete maintenance template")
+    def delete(self, request, pk):
+        template = self.get_object(pk)
+        if not template:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        template.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
