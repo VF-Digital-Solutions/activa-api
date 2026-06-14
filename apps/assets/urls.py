@@ -7,6 +7,8 @@ from apps.assets.views import (
     AssetUsageLogListCreateView,
     MaintenanceRecordListCreateView,
     MaintenanceRecordDetailView,
+    MaintenanceTemplateListCreateView,
+    MaintenanceTemplateDetailView,
 )
 
 urlpatterns = [
@@ -32,5 +34,15 @@ urlpatterns = [
         "maintenance/<uuid:pk>/",
         MaintenanceRecordDetailView.as_view(),
         name="maintenance-detail",
+    ),
+    path(
+        "templates/",
+        MaintenanceTemplateListCreateView.as_view(),
+        name="maintenance-template-list-create",
+    ),
+    path(
+        "templates/<uuid:pk>/",
+        MaintenanceTemplateDetailView.as_view(),
+        name="maintenance-template-detail",
     ),
 ]
