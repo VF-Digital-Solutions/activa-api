@@ -19,6 +19,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
+
+admin.site.site_header = "HomeTrack Admin"
+admin.site.site_title = "HomeTrack"
+admin.site.index_title = "Panel de administración"
 from api.v1.router import urlpatterns as v1_urls
 from drf_spectacular.views import (
     SpectacularAPIView,
