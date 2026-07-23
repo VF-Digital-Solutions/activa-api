@@ -30,6 +30,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.core",
     "apps.identity",
+    "apps.assessment",
     # Disabled for Activa MVP (2026-07-23): HomeTrack household-management modules,
     # not used in the current Activa scope. Code kept in place, not deleted.
     # "apps.households",
