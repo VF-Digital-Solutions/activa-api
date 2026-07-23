@@ -1,11 +1,15 @@
+from django.db import transaction
+from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.agenda.models import TimeBlock
-from apps.agenda.serializers import TimeBlockSerializer
+from apps.agenda.serializers import DayCloseSerializer, TimeBlockSerializer
+from apps.agenda.services import calculate_coherence_index, calculate_daily_distribution
 
 
 @extend_schema(tags=["Agenda"])
@@ -96,3 +100,57 @@ class TimeBlockDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         block.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Agenda"])
+class DayCloseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Close the day",
+        description=(
+            "Bulk-confirms a day's planned time blocks as fulfilled or "
+            "omitted (optionally linking a replacement block for a "
+            "reassigned omission), then returns the day's distribution and "
+            "coherence index."
+        ),
+        request=DayCloseSerializer,
+    )
+    def post(self, request):
+        serializer = DayCloseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        date = serializer.validated_data.get("date") or timezone.localdate()
+        resolutions = serializer.validated_data["resolutions"]
+
+        with transaction.atomic():
+            for item in resolutions:
+                block = item["block"]
+                replaced_by = item.get("replaced_by")
+
+                if block.user_id != request.user.id:
+                    raise ValidationError(
+                        f"El bloque {block.id} no pertenece al usuario."
+                    )
+                if block.start_datetime and block.start_datetime.date() != date:
+                    raise ValidationError(
+                        f"El bloque {block.id} no corresponde a la fecha {date}."
+                    )
+                if replaced_by and replaced_by.user_id != request.user.id:
+                    raise ValidationError(
+                        f"El bloque de reemplazo {replaced_by.id} no "
+                        "pertenece al usuario."
+                    )
+
+                block.status = item["status"]
+                block.replaced_by = (
+                    replaced_by if item["status"] == TimeBlock.Status.OMITTED else None
+                )
+                block.save(update_fields=["status", "replaced_by"])
+
+        return Response(
+            {
+                "date": date,
+                "distribution": calculate_daily_distribution(request.user, date),
+                "coherence": calculate_coherence_index(request.user, date),
+            }
+        )
