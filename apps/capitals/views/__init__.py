@@ -6,7 +6,12 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.capitals.models import EmotionalLog, JournalEntry
-from apps.capitals.serializers import EmotionalLogSerializer, JournalEntrySerializer
+from apps.capitals.serializers import (
+    EmotionalAggregatesQuerySerializer,
+    EmotionalLogSerializer,
+    JournalEntrySerializer,
+)
+from apps.capitals.services import calculate_emotional_aggregates
 
 
 @extend_schema(tags=["Capitals"])
@@ -86,6 +91,29 @@ class EmotionalLogDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         log.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Capitals"])
+class EmotionalAggregatesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Emotional aggregates",
+        description=(
+            "Windowed aggregates (7 or 30 days, via ?window=) of the "
+            "authenticated user's emotional logs: average intensity, "
+            "dominant emotions and trend direction. Input for the insight "
+            "module."
+        ),
+        parameters=[EmotionalAggregatesQuerySerializer],
+    )
+    def get(self, request):
+        query = EmotionalAggregatesQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+        result = calculate_emotional_aggregates(
+            request.user, query.validated_data["window"]
+        )
+        return Response(result)
 
 
 @extend_schema(tags=["Capitals"])

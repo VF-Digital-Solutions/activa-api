@@ -1,6 +1,7 @@
 from django.urls import path
 
 from apps.capitals.views import (
+    EmotionalAggregatesView,
     EmotionalLogDetailView,
     EmotionalLogListCreateView,
     JournalEntryDetailView,
@@ -8,6 +9,11 @@ from apps.capitals.views import (
 )
 
 urlpatterns = [
+    path(
+        "emotional-logs/aggregates/",
+        EmotionalAggregatesView.as_view(),
+        name="emotional-log-aggregates",
+    ),
     path(
         "emotional-logs/",
         EmotionalLogListCreateView.as_view(),

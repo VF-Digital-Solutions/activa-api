@@ -31,3 +31,12 @@ class JournalEntrySerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "recorded_at", "created_at"]
+
+
+class EmotionalAggregatesQuerySerializer(serializers.Serializer):
+    window = serializers.IntegerField(required=False, default=7)
+
+    def validate_window(self, value):
+        if value not in (7, 30):
+            raise serializers.ValidationError("window debe ser 7 o 30.")
+        return value
