@@ -1,4 +1,12 @@
 from django.contrib import admin
 
-# Create your admin registrations here. CapitalEntry is abstract; concrete
-# subclasses (e.g. EmotionalLog) register their own ModelAdmin.
+from .models import EmotionalLog
+
+
+@admin.register(EmotionalLog)
+class EmotionalLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "emotion", "intensity", "recorded_at")
+    list_filter = ("emotion",)
+    search_fields = ("user__email", "context_note")
+    raw_id_fields = ("user",)
+    date_hierarchy = "recorded_at"

@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.utils import timezone
 
@@ -31,3 +32,44 @@ class CapitalEntry(TimeStampedModel):
     class Meta:
         abstract = True
         ordering = ["-recorded_at"]
+
+
+class EmotionalLog(CapitalEntry):
+    """Registro de una emoción vivida, con intensidad y nota de contexto opcional.
+
+    Permite múltiples entradas por día, cada una con su propio timestamp
+    (recorded_at, heredado de CapitalEntry).
+    """
+
+    class Emotion(models.TextChoices):
+        JOY = "JOY", "Alegría"
+        GRATITUDE = "GRATITUDE", "Gratitud"
+        CALM = "CALM", "Calma"
+        LOVE = "LOVE", "Amor"
+        PRIDE = "PRIDE", "Orgullo"
+        SADNESS = "SADNESS", "Tristeza"
+        ANGER = "ANGER", "Ira"
+        FEAR = "FEAR", "Miedo"
+        ANXIETY = "ANXIETY", "Ansiedad"
+        FRUSTRATION = "FRUSTRATION", "Frustración"
+        LONELINESS = "LONELINESS", "Soledad"
+        SHAME = "SHAME", "Vergüenza"
+
+    emotion = models.CharField(max_length=20, choices=Emotion.choices)
+    intensity = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(10)]
+    )
+    context_note = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "capitals_emotional_log"
+        verbose_name = "Registro emocional"
+        verbose_name_plural = "Registros emocionales"
+        ordering = ["-recorded_at"]
+
+    def save(self, *args, **kwargs):
+        self.capital_type = self.CapitalType.EMOTIONAL
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} — {self.get_emotion_display()} ({self.intensity})"

@@ -4,6 +4,7 @@ urlpatterns = [
     path("auth/", include("apps.identity.urls")),
     path("assessment/", include("apps.assessment.urls")),
     path("agenda/", include("apps.agenda.urls")),
+    path("capitals/", include("apps.capitals.urls")),
     # Disabled for Activa MVP (2026-07-23): routes for household-management
     # modules currently out of INSTALLED_APPS. See config/settings/base.py.
     # path("households/", include("apps.households.urls")),
