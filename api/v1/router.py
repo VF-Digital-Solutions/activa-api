@@ -3,8 +3,7 @@ from django.urls import include, path
 urlpatterns = [
     path("auth/", include("apps.identity.urls")),
     path("assessment/", include("apps.assessment.urls")),
-    # Note: path("agenda/", include("apps.agenda.urls")) will be added in a
-    # follow-up issue once apps.agenda gets CRUD endpoints.
+    path("agenda/", include("apps.agenda.urls")),
     # Disabled for Activa MVP (2026-07-23): routes for household-management
     # modules currently out of INSTALLED_APPS. See config/settings/base.py.
     # path("households/", include("apps.households.urls")),
