@@ -47,3 +47,51 @@ def calculate_daily_distribution(user, date, sleep_hours=DEFAULT_SLEEP_HOURS):
         "by_category": by_category,
         "by_energy_tag": by_energy_tag,
     }
+
+
+def calculate_coherence_index(user, date):
+    """Índice de coherencia: intención vs. ejecución para los bloques planificados de `date`.
+
+    Se consideran los bloques cuyo start_datetime cae en `date` (lo planificado
+    para ese día), evaluados según su estado final: cumplidos, omitidos y
+    reasignados, u omitidos sin reasignar. Un bloque omitido con replaced_by
+    apuntando a otro bloque cuenta como reasignación, no como falla.
+
+    El índice se calcula solo sobre bloques ya resueltos (cumplidos u
+    omitidos); los que siguen en PLANNED aún no han sido evaluados y no
+    entran en el cálculo, pero se reportan aparte.
+    """
+    planned = TimeBlock.objects.filter(user=user, start_datetime__date=date)
+
+    fulfilled = 0
+    omitted_reassigned = 0
+    omitted_failed = 0
+    still_planned = 0
+
+    for block in planned:
+        if block.status == TimeBlock.Status.FULFILLED:
+            fulfilled += 1
+        elif block.status == TimeBlock.Status.OMITTED:
+            if block.replaced_by_id:
+                omitted_reassigned += 1
+            else:
+                omitted_failed += 1
+        else:
+            still_planned += 1
+
+    resolved_total = fulfilled + omitted_reassigned + omitted_failed
+    coherence_index = (
+        round((fulfilled + omitted_reassigned) / resolved_total, 2)
+        if resolved_total
+        else None
+    )
+
+    return {
+        "date": date,
+        "planned_total": planned.count(),
+        "fulfilled": fulfilled,
+        "omitted_reassigned": omitted_reassigned,
+        "omitted_failed": omitted_failed,
+        "still_planned": still_planned,
+        "coherence_index": coherence_index,
+    }
