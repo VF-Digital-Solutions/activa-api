@@ -31,6 +31,7 @@ LOCAL_APPS = [
     "apps.core",
     "apps.identity",
     "apps.assessment",
+    "apps.agenda",
     # Disabled for Activa MVP (2026-07-23): HomeTrack household-management modules,
     # not used in the current Activa scope. Code kept in place, not deleted.
     # "apps.households",
@@ -40,7 +41,7 @@ LOCAL_APPS = [
     # "apps.benefits",
     # "apps.finances",
     # "apps.notifications",
-    # "apps.agenda",
+    # "apps.agenda_legacy",  # renamed from apps.agenda (2026-07-23) — see apps/agenda_legacy
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

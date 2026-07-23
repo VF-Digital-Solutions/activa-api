@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
-from apps.agenda.models import AgendaEvent
-from apps.agenda.serializers import AgendaEventSerializer
+from apps.agenda_legacy.models import AgendaEvent
+from apps.agenda_legacy.serializers import AgendaEventSerializer
 from apps.identity.models import User
 from apps.notifications.models import Alert
 

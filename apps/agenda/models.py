@@ -1,54 +1,67 @@
-import uuid
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
+
 from apps.core.models import TimeStampedModel
 from apps.identity.models import User
-from apps.households.models import HouseholdNode
 
 
-class AgendaEvent(TimeStampedModel):
+class TimeBlock(TimeStampedModel):
+    """Bloque de tiempo vital: unidad principal de la agenda existencial de Activa."""
 
-    class EventType(models.TextChoices):
-        PERSONAL = "PERSONAL", "Personal"
-        HOUSEHOLD = "HOUSEHOLD", "Del hogar"
-        REMINDER = "REMINDER", "Recordatorio"
+    class ExistentialCategory(models.TextChoices):
+        OBLIGATIONS = "OBLIGATIONS", "Obligaciones"
+        INNER_NOURISHMENT = "INNER_NOURISHMENT", "Nutrición interior"
+        BONDS = "BONDS", "Vínculos"
+        TRANSCENDENCE = "TRANSCENDENCE", "Trascendencia"
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="agenda_events")
+    class EnergyTag(models.TextChoices):
+        ENERGIZES = "ENERGIZES", "Energiza"
+        NEUTRAL = "NEUTRAL", "Neutro"
+        DRAINS = "DRAINS", "Drena"
+
+    class Status(models.TextChoices):
+        PLANNED = "PLANNED", "Planificado"
+        FULFILLED = "FULFILLED", "Cumplido"
+        OMITTED = "OMITTED", "Omitido"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="time_blocks"
+    )
     title = models.CharField(max_length=150)
-    description = models.TextField(blank=True)
-
-    event_type = models.CharField(
-        max_length=10, choices=EventType.choices, default=EventType.PERSONAL
+    existential_category = models.CharField(
+        max_length=20, choices=ExistentialCategory.choices
+    )
+    energy_tag = models.CharField(max_length=10, choices=EnergyTag.choices)
+    duration_minutes = models.PositiveIntegerField()
+    start_datetime = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(
+        max_length=10, choices=Status.choices, default=Status.PLANNED
     )
 
-    starts_at = models.DateTimeField()
-    ends_at = models.DateTimeField(null=True, blank=True)
-    is_all_day = models.BooleanField(default=False)
+    # GenericForeignKey opcional hacia el objeto de origen (p.ej. un hábito
+    # o evento externo que dio pie a este bloque).
+    source_content_type = models.ForeignKey(
+        ContentType, on_delete=models.SET_NULL, null=True, blank=True
+    )
+    source_object_id = models.UUIDField(null=True, blank=True)
+    source = GenericForeignKey("source_content_type", "source_object_id")
 
-    # Solo relevante cuando event_type=HOUSEHOLD
-    household_node = models.ForeignKey(
-        HouseholdNode,
+    # Auto-referencia opcional: si el bloque fue omitido y reemplazado por
+    # otro (reasignación de tiempo, no fallo de cumplimiento).
+    replaced_by = models.ForeignKey(
+        "self",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="agenda_events",
+        related_name="replaces",
     )
-    attendees = models.ManyToManyField(
-        User, related_name="attending_agenda_events", blank=True
-    )
-
-    # Solo relevante cuando event_type=REMINDER
-    remind_at = models.DateTimeField(null=True, blank=True)
-    channels = models.JSONField(default=list, blank=True)
-    reminder_sent = models.BooleanField(default=False)
-
-    color = models.CharField(max_length=10, blank=True)
-    is_active = models.BooleanField(default=True)
 
     class Meta:
-        db_table = "agenda_event"
-        verbose_name = "Evento de agenda"
-        verbose_name_plural = "Eventos de agenda"
-        ordering = ["starts_at"]
+        db_table = "agenda_time_block"
+        verbose_name = "Bloque de tiempo"
+        verbose_name_plural = "Bloques de tiempo"
+        ordering = ["-start_datetime", "-created_at"]
 
     def __str__(self):
-        return f"{self.title} ({self.event_type}) — {self.starts_at:%Y-%m-%d %H:%M}"
+        return f"{self.user} — {self.title} ({self.status})"

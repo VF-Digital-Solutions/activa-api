@@ -1,5 +1,5 @@
 from django.urls import path
-from apps.agenda.views import (
+from apps.agenda_legacy.views import (
     AgendaView,
     AgendaTodayView,
     AgendaEventListCreateView,
