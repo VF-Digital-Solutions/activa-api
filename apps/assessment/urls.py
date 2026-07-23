@@ -3,6 +3,7 @@ from django.urls import path
 from apps.assessment.views import (
     AssessmentAnswerView,
     AssessmentCompleteView,
+    AssessmentEvolutionView,
     AssessmentStartView,
 )
 
@@ -17,5 +18,10 @@ urlpatterns = [
         "attempts/<uuid:pk>/complete/",
         AssessmentCompleteView.as_view(),
         name="assessment-complete",
+    ),
+    path(
+        "evolution/",
+        AssessmentEvolutionView.as_view(),
+        name="assessment-evolution",
     ),
 ]

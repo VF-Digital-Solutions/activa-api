@@ -18,6 +18,7 @@ from apps.assessment.serializers import (
     AssessmentAttemptSerializer,
     AssessmentResponseSerializer,
     AssessmentSnapshotSerializer,
+    EvolutionQuerySerializer,
     StartAssessmentSerializer,
 )
 
@@ -117,3 +118,53 @@ class AssessmentCompleteView(APIView):
         attempt.save(update_fields=["status", "completed_at"])
 
         return Response(AssessmentSnapshotSerializer(snapshot).data)
+
+
+@extend_schema(tags=["Assessment"])
+class AssessmentEvolutionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="Assessment evolution",
+        description=(
+            "Compares the baseline assessment (the first completed snapshot) "
+            "against every re-assessment over time for the given type, "
+            "returning the per-dimension delta against that baseline."
+        ),
+        parameters=[EvolutionQuerySerializer],
+    )
+    def get(self, request):
+        query = EvolutionQuerySerializer(data=request.query_params)
+        query.is_valid(raise_exception=True)
+
+        snapshots = list(
+            AssessmentSnapshot.objects.filter(
+                user=request.user, assessment__type=query.validated_data["type"]
+            ).order_by("snapshot_date")
+        )
+
+        if not snapshots:
+            return Response({"baseline": None, "evolution": []})
+
+        baseline = snapshots[0]
+        evolution = []
+        for snapshot in snapshots:
+            deltas = {
+                dimension: round(score - baseline.scores_by_dimension[dimension], 2)
+                for dimension, score in snapshot.scores_by_dimension.items()
+                if dimension in baseline.scores_by_dimension
+            }
+            evolution.append(
+                {
+                    "snapshot_date": snapshot.snapshot_date,
+                    "scores_by_dimension": snapshot.scores_by_dimension,
+                    "deltas": deltas,
+                }
+            )
+
+        return Response(
+            {
+                "baseline": AssessmentSnapshotSerializer(baseline).data,
+                "evolution": evolution,
+            }
+        )

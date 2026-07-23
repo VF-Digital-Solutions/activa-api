@@ -85,3 +85,7 @@ class AssessmentSnapshotSerializer(serializers.ModelSerializer):
         model = AssessmentSnapshot
         fields = ["id", "attempt", "snapshot_date", "scores_by_dimension"]
         read_only_fields = fields
+
+
+class EvolutionQuerySerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=Assessment.Type.choices)
