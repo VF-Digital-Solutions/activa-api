@@ -1,6 +1,12 @@
 from django.contrib import admin
 
-from .models import Assessment, AssessmentResponse, Question
+from .models import (
+    Assessment,
+    AssessmentAttempt,
+    AssessmentResponse,
+    AssessmentSnapshot,
+    Question,
+)
 
 
 class QuestionInline(admin.TabularInline):
@@ -26,10 +32,28 @@ class QuestionAdmin(admin.ModelAdmin):
     raw_id_fields = ("assessment",)
 
 
+@admin.register(AssessmentAttempt)
+class AssessmentAttemptAdmin(admin.ModelAdmin):
+    list_display = ("user", "assessment", "status", "created_at", "completed_at")
+    list_filter = ("status", "assessment")
+    search_fields = ("user__email",)
+    raw_id_fields = ("user", "assessment")
+    date_hierarchy = "created_at"
+
+
 @admin.register(AssessmentResponse)
 class AssessmentResponseAdmin(admin.ModelAdmin):
     list_display = ("user", "assessment", "question", "score", "created_at")
     list_filter = ("assessment",)
     search_fields = ("user__email",)
-    raw_id_fields = ("user", "assessment", "question")
+    raw_id_fields = ("attempt", "user", "assessment", "question")
     date_hierarchy = "created_at"
+
+
+@admin.register(AssessmentSnapshot)
+class AssessmentSnapshotAdmin(admin.ModelAdmin):
+    list_display = ("user", "assessment", "snapshot_date")
+    list_filter = ("assessment",)
+    search_fields = ("user__email",)
+    raw_id_fields = ("attempt", "user", "assessment")
+    date_hierarchy = "snapshot_date"

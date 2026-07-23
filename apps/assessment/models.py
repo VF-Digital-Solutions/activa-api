@@ -66,9 +66,40 @@ class Question(TimeStampedModel):
         return f"{self.assessment} — #{self.order}"
 
 
+class AssessmentAttempt(TimeStampedModel):
+    """Una sesión de evaluación de un usuario: agrupa las respuestas de una sola vez que se responde el cuestionario."""
+
+    class Status(models.TextChoices):
+        IN_PROGRESS = "IN_PROGRESS", "En progreso"
+        COMPLETED = "COMPLETED", "Completada"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="assessment_attempts"
+    )
+    assessment = models.ForeignKey(
+        Assessment, on_delete=models.CASCADE, related_name="attempts"
+    )
+    status = models.CharField(
+        max_length=15, choices=Status.choices, default=Status.IN_PROGRESS
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "assessment_attempt"
+        verbose_name = "Intento de evaluación"
+        verbose_name_plural = "Intentos de evaluación"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.assessment} ({self.status})"
+
+
 class AssessmentResponse(TimeStampedModel):
     """Respuesta de un usuario a una pregunta, con puntaje numérico y marca de tiempo."""
 
+    attempt = models.ForeignKey(
+        AssessmentAttempt, on_delete=models.CASCADE, related_name="responses"
+    )
     user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="assessment_responses"
     )
@@ -87,6 +118,32 @@ class AssessmentResponse(TimeStampedModel):
         verbose_name = "Respuesta de evaluación"
         verbose_name_plural = "Respuestas de evaluación"
         ordering = ["-created_at"]
+        unique_together = ("attempt", "question")
 
     def __str__(self):
         return f"{self.user} — {self.question} = {self.score}"
+
+
+class AssessmentSnapshot(TimeStampedModel):
+    """Fotografía fechada de los puntajes por dimensión al completar un intento de evaluación."""
+
+    attempt = models.OneToOneField(
+        AssessmentAttempt, on_delete=models.CASCADE, related_name="snapshot"
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="assessment_snapshots"
+    )
+    assessment = models.ForeignKey(
+        Assessment, on_delete=models.CASCADE, related_name="snapshots"
+    )
+    snapshot_date = models.DateField(auto_now_add=True)
+    scores_by_dimension = models.JSONField(default=dict)
+
+    class Meta:
+        db_table = "assessment_snapshot"
+        verbose_name = "Snapshot de evaluación"
+        verbose_name_plural = "Snapshots de evaluación"
+        ordering = ["-snapshot_date"]
+
+    def __str__(self):
+        return f"{self.user} — {self.assessment} @ {self.snapshot_date}"
