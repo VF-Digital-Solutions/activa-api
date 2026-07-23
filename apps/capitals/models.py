@@ -73,3 +73,39 @@ class EmotionalLog(CapitalEntry):
 
     def __str__(self):
         return f"{self.user} — {self.get_emotion_display()} ({self.intensity})"
+
+
+class JournalEntry(CapitalEntry):
+    """Diario nocturno con las preguntas guiadas del manual, una entrada por día.
+
+    Todos los campos son opcionales: la reflexión puede ser parcial.
+    """
+
+    energy_gain = models.TextField(
+        blank=True, help_text="¿Qué te dio energía hoy?"
+    )
+    energy_drain = models.TextField(
+        blank=True, help_text="¿Qué te la drenó?"
+    )
+    avoided_conversation = models.TextField(
+        blank=True, help_text="¿Qué conversación estás evitando?"
+    )
+    attention_needed = models.TextField(
+        blank=True, help_text="¿Qué parte de ti necesita atención?"
+    )
+    gratitude = models.TextField(
+        blank=True, help_text="¿Qué merece tu gratitud?"
+    )
+
+    class Meta:
+        db_table = "capitals_journal_entry"
+        verbose_name = "Entrada de diario"
+        verbose_name_plural = "Entradas de diario"
+        ordering = ["-recorded_at"]
+
+    def save(self, *args, **kwargs):
+        self.capital_type = self.CapitalType.EMOTIONAL
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.user} — {self.recorded_at.date()}"
