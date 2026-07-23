@@ -30,14 +30,16 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.core",
     "apps.identity",
-    "apps.households",
-    "apps.assets",
-    "apps.routines",
-    "apps.reservations",
-    "apps.benefits",
-    "apps.finances",
-    "apps.notifications",
-    "apps.agenda",
+    # Disabled for Activa MVP (2026-07-23): HomeTrack household-management modules,
+    # not used in the current Activa scope. Code kept in place, not deleted.
+    # "apps.households",
+    # "apps.assets",
+    # "apps.routines",
+    # "apps.reservations",
+    # "apps.benefits",
+    # "apps.finances",
+    # "apps.notifications",
+    # "apps.agenda",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
