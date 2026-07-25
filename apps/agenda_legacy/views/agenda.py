@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from apps.reservations.models import Reservation
 from apps.routines.models import HouseholdRoutineOccurrence, Habit
-from apps.agenda.models import AgendaEvent
+from apps.agenda_legacy.models import AgendaEvent
 
 
 # Colors por tipo de fuente

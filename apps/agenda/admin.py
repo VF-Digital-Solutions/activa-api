@@ -1,11 +1,20 @@
 from django.contrib import admin
-from .models import AgendaEvent
+
+from .models import TimeBlock
 
 
-@admin.register(AgendaEvent)
-class AgendaEventAdmin(admin.ModelAdmin):
-    list_display = ("title", "event_type", "user", "starts_at", "ends_at", "is_active")
-    list_filter = ("event_type", "is_all_day", "is_active")
-    search_fields = ("title", "description", "user__email")
-    date_hierarchy = "starts_at"
-    filter_horizontal = ("attendees",)
+@admin.register(TimeBlock)
+class TimeBlockAdmin(admin.ModelAdmin):
+    list_display = (
+        "title",
+        "user",
+        "existential_category",
+        "energy_tag",
+        "status",
+        "start_datetime",
+        "duration_minutes",
+    )
+    list_filter = ("existential_category", "energy_tag", "status")
+    search_fields = ("title", "user__email")
+    raw_id_fields = ("user", "replaced_by")
+    date_hierarchy = "start_datetime"

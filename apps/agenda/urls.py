@@ -1,16 +1,13 @@
 from django.urls import path
+
 from apps.agenda.views import (
-    AgendaView,
-    AgendaTodayView,
-    AgendaEventListCreateView,
-    AgendaEventDetailView,
-    AgendaEventInviteView,
+    DayCloseView,
+    TimeBlockDetailView,
+    TimeBlockListCreateView,
 )
 
 urlpatterns = [
-    path("", AgendaView.as_view(), name="agenda"),
-    path("today/", AgendaTodayView.as_view(), name="agenda-today"),
-    path("events/", AgendaEventListCreateView.as_view(), name="agenda-events"),
-    path("events/<uuid:pk>/", AgendaEventDetailView.as_view(), name="agenda-event-detail"),
-    path("events/<uuid:pk>/invite/", AgendaEventInviteView.as_view(), name="agenda-event-invite"),
+    path("", TimeBlockListCreateView.as_view(), name="time-block-list-create"),
+    path("<uuid:pk>/", TimeBlockDetailView.as_view(), name="time-block-detail"),
+    path("day-close/", DayCloseView.as_view(), name="agenda-day-close"),
 ]
