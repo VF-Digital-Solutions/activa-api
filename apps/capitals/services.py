@@ -8,7 +8,7 @@ from apps.capitals.models import EmotionalLog
 TREND_THRESHOLD = 0.5
 
 
-def calculate_emotional_aggregates(user, window_days=7):
+def calculate_emotional_aggregates(user, window_days=7, as_of_date=None):
     """Agregados de EmotionalLog en una ventana de días: intensidad promedio,
     emociones dominantes y dirección de tendencia. Insumo para el módulo de
     insight (IVI).
@@ -16,8 +16,12 @@ def calculate_emotional_aggregates(user, window_days=7):
     La tendencia compara el promedio de intensidad de la primera mitad de la
     ventana contra la segunda mitad; requiere datos en ambas mitades, de lo
     contrario es INSUFFICIENT_DATA.
+
+    `as_of_date` permite recalcular la ventana como si se hubiera evaluado en
+    una fecha pasada (usado por el seed de datos de demo); por defecto usa
+    hoy, igual que antes.
     """
-    end_date = timezone.localdate()
+    end_date = as_of_date or timezone.localdate()
     start_date = end_date - timedelta(days=window_days - 1)
 
     logs = EmotionalLog.objects.filter(

@@ -9,17 +9,16 @@ from apps.capitals.services import calculate_emotional_aggregates
 RESILIENCE_QUESTION_ORDER = 5
 
 
-def _latest_snapshot(user, assessment_type):
-    return (
-        AssessmentSnapshot.objects.filter(
-            user=user, assessment__type=assessment_type
-        )
-        .order_by("-snapshot_date", "-created_at")
-        .first()
+def _latest_snapshot(user, assessment_type, as_of_date=None):
+    queryset = AssessmentSnapshot.objects.filter(
+        user=user, assessment__type=assessment_type
     )
+    if as_of_date is not None:
+        queryset = queryset.filter(snapshot_date__lte=as_of_date)
+    return queryset.order_by("-snapshot_date", "-created_at").first()
 
 
-def calculate_ivi(user):
+def calculate_ivi(user, as_of_date=None):
     """Índice Vital Integrado: Assets - Liabilities + Adaptation.
 
     En el MVP, sin modelos dedicados a pasivos o capacidad de adaptación,
@@ -34,17 +33,24 @@ def calculate_ivi(user):
     recientes en EmotionalLog (ventana de 7 días), se usa ese promedio de
     intensidad en su lugar.
 
+    `as_of_date` recalcula el índice como si se hubiera evaluado en una
+    fecha pasada (usado por el seed de datos de demo): restringe qué
+    snapshots de evaluación y qué ventana emocional se consideran "ya
+    conocidos" a esa fecha. Por defecto usa hoy, igual que antes.
+
     Retorna None si falta alguna de las dos evaluaciones base.
     """
-    audit_snapshot = _latest_snapshot(user, Assessment.Type.AUDIT_7_AREAS)
-    health_snapshot = _latest_snapshot(user, Assessment.Type.HEALTH_SCALE_10)
+    audit_snapshot = _latest_snapshot(user, Assessment.Type.AUDIT_7_AREAS, as_of_date)
+    health_snapshot = _latest_snapshot(user, Assessment.Type.HEALTH_SCALE_10, as_of_date)
 
     if audit_snapshot is None or health_snapshot is None:
         return None
 
     assets_by_dimension = dict(audit_snapshot.scores_by_dimension)
 
-    emotional_aggregate = calculate_emotional_aggregates(user, window_days=7)
+    emotional_aggregate = calculate_emotional_aggregates(
+        user, window_days=7, as_of_date=as_of_date
+    )
     if emotional_aggregate["average_intensity"] is not None:
         assets_by_dimension["EMOTIONAL"] = emotional_aggregate["average_intensity"]
 
