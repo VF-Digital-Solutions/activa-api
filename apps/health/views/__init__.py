@@ -5,8 +5,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.health.models import ActivityLog, SleepLog
-from apps.health.serializers import ActivityLogSerializer, SleepLogSerializer
+from apps.health.models import ActivityLog, NutritionLog, SleepLog
+from apps.health.serializers import (
+    ActivityLogSerializer,
+    NutritionLogSerializer,
+    SleepLogSerializer,
+)
 
 
 @extend_schema(tags=["Health"])
@@ -167,6 +171,85 @@ class ActivityLogDetailView(APIView):
     @extend_schema(
         summary="Delete activity log",
         description="Deletes an activity log entry.",
+        responses={204: None},
+    )
+    def delete(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        log.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Health"])
+class NutritionLogListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List nutrition logs",
+        description="Returns the authenticated user's nutrition log history.",
+        responses={200: NutritionLogSerializer(many=True)},
+    )
+    def get(self, request):
+        logs = NutritionLog.objects.filter(user=request.user)
+        serializer = NutritionLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Log a meal",
+        description=(
+            "Creates a nutrition log entry. Multiple entries per day are "
+            "supported, each with its own recorded_at timestamp."
+        ),
+        request=NutritionLogSerializer,
+        responses={201: NutritionLogSerializer},
+    )
+    def post(self, request):
+        serializer = NutritionLogSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Health"])
+class NutritionLogDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        try:
+            return NutritionLog.objects.get(pk=pk, user=request.user)
+        except NutritionLog.DoesNotExist:
+            return None
+
+    @extend_schema(
+        summary="Get nutrition log",
+        description="Returns a nutrition log entry by ID.",
+        responses={200: NutritionLogSerializer},
+    )
+    def get(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(NutritionLogSerializer(log).data)
+
+    @extend_schema(
+        summary="Update nutrition log",
+        description="Partially updates a nutrition log entry.",
+        request=NutritionLogSerializer,
+        responses={200: NutritionLogSerializer},
+    )
+    def patch(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = NutritionLogSerializer(log, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Delete nutrition log",
+        description="Deletes a nutrition log entry.",
         responses={204: None},
     )
     def delete(self, request, pk):

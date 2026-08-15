@@ -87,3 +87,30 @@ class ActivityLog(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} — {self.get_activity_type_display()} ({self.duration_minutes}min)"
+
+
+class NutritionLog(TimeStampedModel):
+    """Registro de una comida. Múltiples entradas por día, una por comida."""
+
+    class MealType(models.TextChoices):
+        BREAKFAST = "BREAKFAST", "Desayuno"
+        LUNCH = "LUNCH", "Almuerzo"
+        DINNER = "DINNER", "Cena"
+        SNACK = "SNACK", "Colación"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="nutrition_logs"
+    )
+    recorded_at = models.DateTimeField(default=timezone.now)
+    meal_type = models.CharField(max_length=10, choices=MealType.choices)
+    description = models.TextField()
+    calories = models.PositiveIntegerField(null=True, blank=True)
+
+    class Meta:
+        db_table = "health_nutrition_log"
+        verbose_name = "Registro de nutrición"
+        verbose_name_plural = "Registros de nutrición"
+        ordering = ["-recorded_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.get_meal_type_display()} ({self.recorded_at.date()})"
