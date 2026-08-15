@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.health.models import SleepLog
-from apps.health.serializers import SleepLogSerializer
+from apps.health.models import ActivityLog, SleepLog
+from apps.health.serializers import ActivityLogSerializer, SleepLogSerializer
 
 
 @extend_schema(tags=["Health"])
@@ -88,6 +88,85 @@ class SleepLogDetailView(APIView):
     @extend_schema(
         summary="Delete sleep log",
         description="Deletes a sleep log entry.",
+        responses={204: None},
+    )
+    def delete(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        log.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Health"])
+class ActivityLogListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List activity logs",
+        description="Returns the authenticated user's physical activity log history.",
+        responses={200: ActivityLogSerializer(many=True)},
+    )
+    def get(self, request):
+        logs = ActivityLog.objects.filter(user=request.user)
+        serializer = ActivityLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Log a physical activity session",
+        description=(
+            "Creates an activity log entry. Multiple entries per day are "
+            "supported, each with its own recorded_at timestamp."
+        ),
+        request=ActivityLogSerializer,
+        responses={201: ActivityLogSerializer},
+    )
+    def post(self, request):
+        serializer = ActivityLogSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Health"])
+class ActivityLogDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        try:
+            return ActivityLog.objects.get(pk=pk, user=request.user)
+        except ActivityLog.DoesNotExist:
+            return None
+
+    @extend_schema(
+        summary="Get activity log",
+        description="Returns an activity log entry by ID.",
+        responses={200: ActivityLogSerializer},
+    )
+    def get(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(ActivityLogSerializer(log).data)
+
+    @extend_schema(
+        summary="Update activity log",
+        description="Partially updates an activity log entry.",
+        request=ActivityLogSerializer,
+        responses={200: ActivityLogSerializer},
+    )
+    def patch(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = ActivityLogSerializer(log, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Delete activity log",
+        description="Deletes an activity log entry.",
         responses={204: None},
     )
     def delete(self, request, pk):

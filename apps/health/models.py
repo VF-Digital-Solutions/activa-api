@@ -43,3 +43,47 @@ class SleepLog(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} — {self.sleep_date} ({self.get_quality_display()})"
+
+
+class ActivityLog(TimeStampedModel):
+    """Registro de una sesión de actividad física.
+
+    Múltiples entradas por día, cada una con su propio timestamp
+    (recorded_at), a diferencia de SleepLog que es una por noche.
+    """
+
+    class ActivityType(models.TextChoices):
+        WALK = "WALK", "Caminata"
+        RUN = "RUN", "Running"
+        CYCLING = "CYCLING", "Ciclismo"
+        SWIMMING = "SWIMMING", "Natación"
+        STRENGTH = "STRENGTH", "Fuerza"
+        YOGA = "YOGA", "Yoga"
+        SPORTS = "SPORTS", "Deporte"
+        OTHER = "OTHER", "Otra"
+
+    class Intensity(models.TextChoices):
+        LOW = "LOW", "Baja"
+        MODERATE = "MODERATE", "Moderada"
+        HIGH = "HIGH", "Alta"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="activity_logs"
+    )
+    recorded_at = models.DateTimeField(default=timezone.now)
+    activity_type = models.CharField(max_length=20, choices=ActivityType.choices)
+    duration_minutes = models.PositiveIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(1440)]
+    )
+    intensity = models.CharField(max_length=10, choices=Intensity.choices)
+    calories_burned = models.PositiveIntegerField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "health_activity_log"
+        verbose_name = "Registro de actividad física"
+        verbose_name_plural = "Registros de actividad física"
+        ordering = ["-recorded_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.get_activity_type_display()} ({self.duration_minutes}min)"
