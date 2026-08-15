@@ -114,3 +114,67 @@ class NutritionLog(TimeStampedModel):
 
     def __str__(self):
         return f"{self.user} — {self.get_meal_type_display()} ({self.recorded_at.date()})"
+
+
+class Medication(TimeStampedModel):
+    """Un medicamento con su esquema de dosis y horarios de recordatorio."""
+
+    class Frequency(models.TextChoices):
+        ONCE_DAILY = "ONCE_DAILY", "Una vez al día"
+        TWICE_DAILY = "TWICE_DAILY", "Dos veces al día"
+        THREE_TIMES_DAILY = "THREE_TIMES_DAILY", "Tres veces al día"
+        WEEKLY = "WEEKLY", "Semanal"
+        AS_NEEDED = "AS_NEEDED", "Según necesidad"
+        OTHER = "OTHER", "Otra"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="medications"
+    )
+    name = models.CharField(max_length=200)
+    dosage = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=20, choices=Frequency.choices)
+    reminder_times = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Horarios de recordatorio, formato HH:MM (ej. ['08:00', '20:00']).",
+    )
+    start_date = models.DateField(default=timezone.localdate)
+    end_date = models.DateField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "health_medication"
+        verbose_name = "Medicación"
+        verbose_name_plural = "Medicaciones"
+        ordering = ["-is_active", "name"]
+
+    def __str__(self):
+        return f"{self.user} — {self.name} ({self.dosage})"
+
+
+class MedicationDoseLog(TimeStampedModel):
+    """Registro de que una dosis fue tomada u omitida."""
+
+    class Status(models.TextChoices):
+        TAKEN = "TAKEN", "Tomada"
+        SKIPPED = "SKIPPED", "Omitida"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="medication_dose_logs"
+    )
+    medication = models.ForeignKey(
+        Medication, on_delete=models.CASCADE, related_name="dose_logs"
+    )
+    taken_at = models.DateTimeField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=Status.choices)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "health_medication_dose_log"
+        verbose_name = "Registro de dosis"
+        verbose_name_plural = "Registros de dosis"
+        ordering = ["-taken_at"]
+
+    def __str__(self):
+        return f"{self.medication.name} — {self.get_status_display()} ({self.taken_at.date()})"

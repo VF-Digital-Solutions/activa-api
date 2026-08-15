@@ -5,9 +5,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.health.models import ActivityLog, NutritionLog, SleepLog
+from apps.health.models import (
+    ActivityLog,
+    Medication,
+    MedicationDoseLog,
+    NutritionLog,
+    SleepLog,
+)
 from apps.health.serializers import (
     ActivityLogSerializer,
+    MedicationDoseLogSerializer,
+    MedicationSerializer,
     NutritionLogSerializer,
     SleepLogSerializer,
 )
@@ -258,3 +266,108 @@ class NutritionLogDetailView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         log.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Health"])
+class MedicationListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List medications",
+        description="Returns the authenticated user's medications.",
+        responses={200: MedicationSerializer(many=True)},
+    )
+    def get(self, request):
+        medications = Medication.objects.filter(user=request.user)
+        serializer = MedicationSerializer(medications, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Add a medication",
+        description="Creates a medication with its dosage, frequency and reminder times.",
+        request=MedicationSerializer,
+        responses={201: MedicationSerializer},
+    )
+    def post(self, request):
+        serializer = MedicationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Health"])
+class MedicationDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        try:
+            return Medication.objects.get(pk=pk, user=request.user)
+        except Medication.DoesNotExist:
+            return None
+
+    @extend_schema(
+        summary="Get medication",
+        description="Returns a medication by ID.",
+        responses={200: MedicationSerializer},
+    )
+    def get(self, request, pk):
+        medication = self.get_object(request, pk)
+        if not medication:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(MedicationSerializer(medication).data)
+
+    @extend_schema(
+        summary="Update medication",
+        description="Partially updates a medication (e.g. deactivate it).",
+        request=MedicationSerializer,
+        responses={200: MedicationSerializer},
+    )
+    def patch(self, request, pk):
+        medication = self.get_object(request, pk)
+        if not medication:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = MedicationSerializer(medication, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Delete medication",
+        description="Deletes a medication and its dose history.",
+        responses={204: None},
+    )
+    def delete(self, request, pk):
+        medication = self.get_object(request, pk)
+        if not medication:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        medication.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@extend_schema(tags=["Health"])
+class MedicationDoseLogListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List medication dose logs",
+        description="Returns the authenticated user's medication dose history.",
+        responses={200: MedicationDoseLogSerializer(many=True)},
+    )
+    def get(self, request):
+        logs = MedicationDoseLog.objects.filter(user=request.user)
+        serializer = MedicationDoseLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Log a medication dose",
+        description="Records that a dose was taken or skipped.",
+        request=MedicationDoseLogSerializer,
+        responses={201: MedicationDoseLogSerializer},
+    )
+    def post(self, request):
+        serializer = MedicationDoseLogSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
