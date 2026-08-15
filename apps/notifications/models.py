@@ -3,7 +3,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from apps.core.models import TimeStampedModel
 from apps.identity.models import User
-from apps.households.models import HouseholdNode
 
 
 class AlertTemplate(TimeStampedModel):
@@ -17,6 +16,7 @@ class AlertTemplate(TimeStampedModel):
         FINANCE_BUDGET = "FINANCE_BUDGET", "Presupuesto"
         FINANCE_RECURRING = "FINANCE_RECURRING", "Gasto recurrente"
         LOYALTY_EXPIRY = "LOYALTY_EXPIRY", "Puntos por vencer"
+        INSIGHT_DIMENSION = "INSIGHT_DIMENSION", "Alerta de dimensión IVI"
         CUSTOM = "CUSTOM", "Personalizado"
 
     type = models.CharField(max_length=20, choices=Type.choices, unique=True)
@@ -44,6 +44,7 @@ class Alert(TimeStampedModel):
         FINANCE_BUDGET = "FINANCE_BUDGET", "Presupuesto"
         FINANCE_RECURRING = "FINANCE_RECURRING", "Gasto recurrente"
         LOYALTY_EXPIRY = "LOYALTY_EXPIRY", "Puntos por vencer"
+        INSIGHT_DIMENSION = "INSIGHT_DIMENSION", "Alerta de dimensión IVI"
         CUSTOM = "CUSTOM", "Personalizado"
 
     class Status(models.TextChoices):
@@ -55,13 +56,6 @@ class Alert(TimeStampedModel):
 
     target_user = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="alerts"
-    )
-    household_node = models.ForeignKey(
-        HouseholdNode,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="alerts",
     )
 
     # GenericForeignKey para desacoplar del tipo de objeto origen

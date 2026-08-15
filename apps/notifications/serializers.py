@@ -22,7 +22,6 @@ class AlertSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "target_user",
-            "household_node",
             "type",
             "title",
             "body",

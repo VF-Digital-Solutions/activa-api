@@ -34,6 +34,7 @@ LOCAL_APPS = [
     "apps.agenda",
     "apps.capitals",
     "apps.insight",
+    "apps.notifications",
     # Disabled for Activa MVP (2026-07-23): HomeTrack household-management modules,
     # not used in the current Activa scope. Code kept in place, not deleted.
     # "apps.households",
@@ -42,7 +43,6 @@ LOCAL_APPS = [
     # "apps.reservations",
     # "apps.benefits",
     # "apps.finances",
-    # "apps.notifications",
     # "apps.agenda_legacy",  # renamed from apps.agenda (2026-07-23) — see apps/agenda_legacy
 ]
 

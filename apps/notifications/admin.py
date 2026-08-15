@@ -13,6 +13,6 @@ class AlertAdmin(admin.ModelAdmin):
     list_display = ("type", "target_user", "title", "status", "scheduled_at", "sent_at", "retry_count")
     list_filter = ("type", "status")
     search_fields = ("title", "target_user__email", "body")
-    raw_id_fields = ("target_user", "household_node", "source_content_type")
+    raw_id_fields = ("target_user", "source_content_type")
     readonly_fields = ("sent_at", "read_at")
     date_hierarchy = "scheduled_at"

@@ -27,7 +27,6 @@ class AlertService:
         scheduled_at: datetime,
         channels: list = None,
         source=None,
-        household_node=None,
         action_url: str = "",
         metadata: dict = None,
     ) -> Alert:
@@ -48,7 +47,6 @@ class AlertService:
 
         alert = Alert.objects.create(
             target_user=user,
-            household_node=household_node,
             source_content_type=content_type,
             source_object_id=object_id,
             type=type,
