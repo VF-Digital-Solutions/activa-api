@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from apps.health.models import (
     ActivityLog,
+    BiometricLog,
     Medication,
     MedicationDoseLog,
     NutritionLog,
@@ -14,6 +15,7 @@ from apps.health.models import (
 )
 from apps.health.serializers import (
     ActivityLogSerializer,
+    BiometricLogSerializer,
     MedicationDoseLogSerializer,
     MedicationSerializer,
     NutritionLogSerializer,
@@ -371,3 +373,83 @@ class MedicationDoseLogListCreateView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save(user=request.user)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Health"])
+class BiometricLogListCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        summary="List biometric logs",
+        description="Returns the authenticated user's biometric indicator history.",
+        responses={200: BiometricLogSerializer(many=True)},
+    )
+    def get(self, request):
+        logs = BiometricLog.objects.filter(user=request.user)
+        serializer = BiometricLogSerializer(logs, many=True)
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Log a biometric indicator",
+        description=(
+            "Creates a biometric log entry. Multiple entries per day are "
+            "supported, each with its own recorded_at timestamp. "
+            "secondary_value only applies to BLOOD_PRESSURE (diastolic)."
+        ),
+        request=BiometricLogSerializer,
+        responses={201: BiometricLogSerializer},
+    )
+    def post(self, request):
+        serializer = BiometricLogSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(user=request.user)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+
+@extend_schema(tags=["Health"])
+class BiometricLogDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self, request, pk):
+        try:
+            return BiometricLog.objects.get(pk=pk, user=request.user)
+        except BiometricLog.DoesNotExist:
+            return None
+
+    @extend_schema(
+        summary="Get biometric log",
+        description="Returns a biometric log entry by ID.",
+        responses={200: BiometricLogSerializer},
+    )
+    def get(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(BiometricLogSerializer(log).data)
+
+    @extend_schema(
+        summary="Update biometric log",
+        description="Partially updates a biometric log entry.",
+        request=BiometricLogSerializer,
+        responses={200: BiometricLogSerializer},
+    )
+    def patch(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = BiometricLogSerializer(log, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    @extend_schema(
+        summary="Delete biometric log",
+        description="Deletes a biometric log entry.",
+        responses={204: None},
+    )
+    def delete(self, request, pk):
+        log = self.get_object(request, pk)
+        if not log:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        log.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

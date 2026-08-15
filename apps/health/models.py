@@ -178,3 +178,39 @@ class MedicationDoseLog(TimeStampedModel):
 
     def __str__(self):
         return f"{self.medication.name} — {self.get_status_display()} ({self.taken_at.date()})"
+
+
+class BiometricLog(TimeStampedModel):
+    """Registro de un indicador biométrico.
+
+    value siempre se usa; secondary_value solo aplica a BLOOD_PRESSURE
+    (sistólica en value, diastólica en secondary_value). Múltiples
+    entradas por día, cada una con su propio timestamp.
+    """
+
+    class IndicatorType(models.TextChoices):
+        WEIGHT = "WEIGHT", "Peso (kg)"
+        BLOOD_PRESSURE = "BLOOD_PRESSURE", "Presión arterial (mmHg)"
+        HEART_RATE = "HEART_RATE", "Frecuencia cardíaca (lpm)"
+        BLOOD_GLUCOSE = "BLOOD_GLUCOSE", "Glucosa en sangre (mg/dL)"
+        BODY_TEMPERATURE = "BODY_TEMPERATURE", "Temperatura corporal (°C)"
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="biometric_logs"
+    )
+    recorded_at = models.DateTimeField(default=timezone.now)
+    indicator_type = models.CharField(max_length=20, choices=IndicatorType.choices)
+    value = models.DecimalField(max_digits=6, decimal_places=2)
+    secondary_value = models.DecimalField(
+        max_digits=6, decimal_places=2, null=True, blank=True
+    )
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "health_biometric_log"
+        verbose_name = "Indicador biométrico"
+        verbose_name_plural = "Indicadores biométricos"
+        ordering = ["-recorded_at"]
+
+    def __str__(self):
+        return f"{self.user} — {self.get_indicator_type_display()} ({self.value})"

@@ -3,6 +3,8 @@ from django.urls import path
 from apps.health.views import (
     ActivityLogDetailView,
     ActivityLogListCreateView,
+    BiometricLogDetailView,
+    BiometricLogListCreateView,
     MedicationDetailView,
     MedicationDoseLogListCreateView,
     MedicationListCreateView,
@@ -45,5 +47,15 @@ urlpatterns = [
         "medication-dose-logs/",
         MedicationDoseLogListCreateView.as_view(),
         name="medication-dose-log-list-create",
+    ),
+    path(
+        "biometric-logs/",
+        BiometricLogListCreateView.as_view(),
+        name="biometric-log-list-create",
+    ),
+    path(
+        "biometric-logs/<uuid:pk>/",
+        BiometricLogDetailView.as_view(),
+        name="biometric-log-detail",
     ),
 ]

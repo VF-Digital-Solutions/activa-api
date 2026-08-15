@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from .models import ActivityLog, Medication, MedicationDoseLog, NutritionLog, SleepLog
+from .models import (
+    ActivityLog,
+    BiometricLog,
+    Medication,
+    MedicationDoseLog,
+    NutritionLog,
+    SleepLog,
+)
 
 
 @admin.register(SleepLog)
@@ -45,3 +52,12 @@ class MedicationDoseLogAdmin(admin.ModelAdmin):
     search_fields = ("user__email", "medication__name")
     raw_id_fields = ("user", "medication")
     date_hierarchy = "taken_at"
+
+
+@admin.register(BiometricLog)
+class BiometricLogAdmin(admin.ModelAdmin):
+    list_display = ("user", "indicator_type", "value", "secondary_value", "recorded_at")
+    list_filter = ("indicator_type",)
+    search_fields = ("user__email", "notes")
+    raw_id_fields = ("user",)
+    date_hierarchy = "recorded_at"

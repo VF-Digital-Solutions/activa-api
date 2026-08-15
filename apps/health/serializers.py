@@ -2,6 +2,7 @@ from rest_framework import serializers
 
 from apps.health.models import (
     ActivityLog,
+    BiometricLog,
     Medication,
     MedicationDoseLog,
     NutritionLog,
@@ -89,6 +90,21 @@ class ActivityLogSerializer(serializers.ModelSerializer):
             "duration_minutes",
             "intensity",
             "calories_burned",
+            "notes",
+            "recorded_at",
+            "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+class BiometricLogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BiometricLog
+        fields = [
+            "id",
+            "indicator_type",
+            "value",
+            "secondary_value",
             "notes",
             "recorded_at",
             "created_at",
